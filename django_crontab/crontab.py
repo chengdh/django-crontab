@@ -93,7 +93,7 @@ class Crontab(object):
                     self.settings.PYTHON_EXECUTABLE,
                     self.settings.DJANGO_MANAGE_PATH,
                     'crontab', 'run',
-                    self.__hash_job(job),
+                    json.dumps(job),
                     '--settings=%s' % self.settings.DJANGO_SETTINGS_MODULE if self.settings.DJANGO_SETTINGS_MODULE else '',
                     job_suffix,
                     self.settings.COMMAND_SUFFIX
@@ -134,36 +134,37 @@ class Crontab(object):
                 # remove the line from the internal buffer
                 self.crontab_lines.remove(line)
                 # output the action if the verbose option is specified
-                if self.verbosity >= 1:
-                    print('removing cronjob: (%s) -> %s' % (
-                        job[0][2].split()[4],
-                        self.__get_job_by_hash(job[0][2][job[0][2].find('crontab run') + 12:].split()[0])
-                    ))
+                # if self.verbosity >= 1:
+                #     print('removing cronjob: (%s) -> %s' % (
+                #         job[0][2].split()[4],
+                #         self.__get_job_by_hash(job[0][2][job[0][2].find('crontab run') + 12:].split()[0])
+                #     ))
 
     # noinspection PyBroadException
-    def run_job(self, job_hash):
+    def run_job(self,job_json_str):
         """
         Executes the corresponding function defined in CRONJOBS
         """
 
         # obtain the job tuple from the hash
-        job = self.__get_job_by_hash(job_hash)
+        # job = self.__get_job_by_hash(job_hash)
+        job = json.loads(job_json_str)
         job_name = job[1]
         job_args = job[2] if len(job) > 2 and not isinstance(job[2], string_type) else []
         job_kwargs = job[3] if len(job) > 3 else {}
 
         lock_file_name = None
         # if the LOCK_JOBS option is specified in settings
-        if self.settings.LOCK_JOBS:
-            # create and open a lock file
-            lock_file = open(os.path.join(tempfile.gettempdir(), 'django_crontab_%s.lock' % job_hash), 'w')
-            lock_file_name = lock_file.name
-            try:
-                # acquire the lock
-                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                logger.warning('Tried to start cron job %s that is already running.', job)
-                return
+        # if self.settings.LOCK_JOBS:
+        #     # create and open a lock file
+        #     lock_file = open(os.path.join(tempfile.gettempdir(), 'django_crontab_%s.lock' % job_hash), 'w')
+        #     lock_file_name = lock_file.name
+        #     try:
+        #         # acquire the lock
+        #         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        #     except IOError:
+        #         logger.warning('Tried to start cron job %s that is already running.', job)
+        #         return
 
         # parse the module and function names from the job
         module_path, function_name = job_name.rsplit('.', 1)

@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('subcommand', choices=['add', 'show', 'remove', 'run'])
-        parser.add_argument('jobhash', nargs='?')
+        parser.add_argument('job_json_str', nargs='?')
 
     def handle(self, *args, **options):
         """
@@ -32,7 +32,7 @@ class Command(BaseCommand):
             with Crontab(**options) as crontab:    # initialize a Crontab class with any specified options
                 crontab.remove_jobs()              # remove all jobs specified in settings from the crontab
         elif options['subcommand'] == 'run':       # run command
-            Crontab().run_job(options['jobhash'])  # run the job with the specified hash
+            Crontab().run_job(options['job_json_str'])  # run the job with the specified hash
         else:
             # output the help string if the user entered something not specified above
             print(self.help)
