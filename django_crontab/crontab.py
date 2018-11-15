@@ -93,7 +93,7 @@ class Crontab(object):
                     self.settings.PYTHON_EXECUTABLE,
                     self.settings.DJANGO_MANAGE_PATH,
                     'crontab', 'run',
-                    json.dumps(job),
+                    "'%s'" % json.dumps(job),
                     '--settings=%s' % self.settings.DJANGO_SETTINGS_MODULE if self.settings.DJANGO_SETTINGS_MODULE else '',
                     job_suffix,
                     self.settings.COMMAND_SUFFIX
@@ -107,19 +107,24 @@ class Crontab(object):
         """
         Print the jobs from from crontab
         """
-        print(u'Currently active jobs in crontab:')
         # iterate through all the lines in the internal buffer
-        for line in self.crontab_lines[:]:
-            # check if the line describes a crontab job
-            job = self.settings.CRONTAB_LINE_REGEXP.findall(line)
-            # if the job is generated using django_crontab for this application
-            if job and job[0][4] == self.settings.CRONTAB_COMMENT:
-                # output the job hash and details if the verbose option is specified
-                if self.verbosity >= 1:
-                    print(u'%s -> %s' % (
-                        job[0][2].split()[4],
-                        self.__get_job_by_hash(job[0][2][job[0][2].find('crontab run') + 12:].split()[0])
-                    ))
+        # for line in self.crontab_lines[:]:
+        #     # check if the line describes a crontab job
+        #     job = self.settings.CRONTAB_LINE_REGEXP.findall(line)
+        #     # if the job is generated using django_crontab for this application
+        #     if job and job[0][4] == self.settings.CRONTAB_COMMENT:
+        #         # output the job hash and details if the verbose option is specified
+        #         if self.verbosity >= 1:
+        #             print(u'%s -> %s' % (
+        #                 job[0][2].split()[4],
+        #                 self.__get_job_by_hash(job[0][2][job[0][2].find('crontab run') + 12:].split()[0])
+        #             ))
+        """
+            打印所有定时工作
+        """
+        for crontab_msg in self.crontab_lines:
+            print(crontab_msg.split("'")[1])
+
 
     def remove_jobs(self):
         """
@@ -132,6 +137,7 @@ class Crontab(object):
             # if the job is generated using django_crontab for this application
             if job and job[0][4] == self.settings.CRONTAB_COMMENT:
                 # remove the line from the internal buffer
+                print('removing cronjob: (%s)' % self.crontab_lines[0].split("'")[1])
                 self.crontab_lines.remove(line)
                 # output the action if the verbose option is specified
                 # if self.verbosity >= 1:
